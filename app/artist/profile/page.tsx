@@ -1,875 +1,470 @@
 "use client"
 
+import { useState } from "react"
+import Image from "next/image"
 import Link from "next/link"
-
-import type React from "react"
-
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { useToast } from "@/components/ui/use-toast"
+import { ChevronLeft, MessageSquare, Calendar, Star, Share2, Bookmark, Heart, Eye } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Switch } from "@/components/ui/switch"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Progress } from "@/components/ui/progress"
-import { Separator } from "@/components/ui/separator"
-import { Skeleton } from "@/components/ui/skeleton"
-import {
-  User,
-  ImageIcon,
-  MapPin,
-  Shield,
-  FileText,
-  CheckSquare,
-  XSquare,
-  DollarSign,
-  CreditCard,
-  Bell,
-  Upload,
-  Save,
-  Edit,
-  Trash2,
-} from "lucide-react"
-import { useAuth } from "@/app/contexts/AuthContext"
-import { getArtistProfile, getArtistPortfolio } from "@/lib/services/artist"
-import { updateArtistProfileAction } from "@/app/actions/artist-actions"
-import ImageCropper from "@/components/image-cropper"
-import { PortfolioGallery } from "@/components/portfolio-gallery"
+import { Card, CardContent } from "@/components/ui/card"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { toast } from "@/components/ui/use-toast"
 
-export default function ArtistProfilePage() {
-  const { userId } = useAuth()
-  const { toast } = useToast()
-  const router = useRouter()
+export default function ArtistProfile() {
+  const [activeTab, setActiveTab] = useState("portfolio")
+  const [isFollowing, setIsFollowing] = useState(false)
 
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [profile, setProfile] = useState<any>(null)
-  const [portfolioImages, setPortfolioImages] = useState<any[]>([])
-  const [portfolioLoading, setPortfolioLoading] = useState(true)
-  const [selectedImage, setSelectedImage] = useState<File | null>(null)
-  const [croppedImage, setCroppedImage] = useState<File | null>(null)
-  const [showCropper, setShowCropper] = useState(false)
-  const [completionPercentage, setCompletionPercentage] = useState(0)
-
-  // Form state
-  const [formData, setFormData] = useState({
-    bio: "",
-    shortBio: "",
-    fullName: "",
-    studioName: "",
-    location: "",
-    locationDescription: "",
-    hourlyRate: "",
-    minimumPrice: "",
-    yearsExperience: "",
-    doList: [""],
-    dontList: [""],
-    depositPercentage: "25",
-    cancellationHours: "48",
-    emailNotifications: true,
-    pushNotifications: true,
-    smsNotifications: false,
-  })
-
-  useEffect(() => {
-    const loadProfile = async () => {
-      if (!userId) return
-
-      try {
-        const { data, error } = await getArtistProfile(userId)
-
-        if (error) {
-          throw new Error(error)
-        }
-
-        setProfile(data)
-
-        // Populate form data
-        if (data) {
-          setFormData({
-            bio: data.bio || "",
-            shortBio: data.personal_brand_statement || "",
-            fullName: data.full_name || "",
-            studioName: data.studio_name || "",
-            location: data.location || "",
-            locationDescription: data.location_preferences || "",
-            hourlyRate: data.hourly_rate?.toString() || "",
-            minimumPrice: data.minimum_price?.toString() || "",
-            yearsExperience: data.years_experience?.toString() || "",
-            doList: data.do_list || [""],
-            dontList: data.dont_list || [""],
-            depositPercentage: data.deposit_percentage?.toString() || "25",
-            cancellationHours: data.cancellation_hours?.toString() || "48",
-            emailNotifications: data.email_notifications !== false,
-            pushNotifications: data.push_notifications !== false,
-            smsNotifications: data.sms_notifications === true,
-          })
-        }
-
-        // Calculate profile completion
-        calculateProfileCompletion(data)
-      } catch (error) {
-        console.error("Error loading profile:", error)
-        toast({
-          title: "Error",
-          description: "Failed to load profile data",
-          variant: "destructive",
-        })
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    const loadPortfolio = async () => {
-      if (!userId) return
-
-      setPortfolioLoading(true)
-      try {
-        const { data, error } = await getArtistPortfolio(userId)
-
-        if (error) {
-          throw new Error(error)
-        }
-
-        setPortfolioImages(data || [])
-      } catch (error) {
-        console.error("Error loading portfolio:", error)
-        toast({
-          title: "Error",
-          description: "Failed to load portfolio images",
-          variant: "destructive",
-        })
-      } finally {
-        setPortfolioLoading(false)
-      }
-    }
-
-    loadProfile()
-    loadPortfolio()
-  }, [userId, toast])
-
-  const calculateProfileCompletion = (data: any) => {
-    if (!data) {
-      setCompletionPercentage(0)
-      return
-    }
-
-    const sections = [
-      !!data.bio,
-      !!data.personal_brand_statement,
-      !!data.profile_image_url,
-      !!data.studio_name,
-      !!data.location,
-      !!data.hourly_rate,
-      !!data.years_experience,
-      !!data.specialties && data.specialties.length > 0,
-      !!data.style_tags && data.style_tags.length > 0,
-      !!data.certifications,
-      !!data.do_list && data.do_list.length > 0,
-      !!data.dont_list && data.dont_list.length > 0,
-    ]
-
-    const completedSections = sections.filter(Boolean).length
-    setCompletionPercentage(Math.round((completedSections / sections.length) * 100))
+  // Mock data for the artist profile
+  const artistData = {
+    name: "Ink Alchemist",
+    username: "@ink_alchemist",
+    avatar: "/placeholder.svg?text=IA&width=200&height=200",
+    bio: "Specializing in blackwork, fine line, and geometric tattoos. Based in Brooklyn, NY with 8+ years of experience.",
+    followers: 2453,
+    following: 187,
+    rating: 4.9,
+    reviews: 128,
+    location: "Brooklyn, NY",
+    studio: "Ethereal Ink Studio",
+    experience: "8+ years",
+    specialties: ["Blackwork", "Fine Line", "Geometric", "Traditional", "Japanese"],
+    availability: "Booking 2 months in advance",
+    hourlyRate: "$150-200",
+    minimumRate: "$100",
+    consultationFee: "$50 (applied to tattoo)",
   }
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
-  }
+  // Mock data for portfolio
+  const portfolioItems = [
+    {
+      id: "p1",
+      url: "/images/tattoo-mythological.png",
+      title: "Mythological Patchwork",
+      likes: 324,
+      views: 1243,
+      category: "blackwork",
+    },
+    {
+      id: "p2",
+      url: "/images/tattoo-illuminati-hand.png",
+      title: "All-Seeing Eye",
+      likes: 198,
+      views: 812,
+      category: "blackwork",
+    },
+    {
+      id: "p3",
+      url: "/images/tattoo-symbolic-patchwork.png",
+      title: "Symbolic Collection",
+      likes: 256,
+      views: 978,
+      category: "traditional",
+    },
+    {
+      id: "p4",
+      url: "/images/tattoo-mandala-sleeves.png",
+      title: "Mandala Sleeves",
+      likes: 187,
+      views: 721,
+      category: "geometric",
+    },
+    {
+      id: "p5",
+      url: "/images/tattoo-fineline-bird.jpeg",
+      title: "Delicate Bird",
+      likes: 142,
+      views: 589,
+      category: "fineline",
+    },
+    {
+      id: "p6",
+      url: "/images/tattoo-graphic-style.jpeg",
+      title: "Urban Graphic",
+      likes: 176,
+      views: 698,
+      category: "graphic",
+    },
+    {
+      id: "p7",
+      url: "/images/tattoo-cyberpunk.png",
+      title: "Cyberpunk Arm",
+      likes: 124,
+      views: 543,
+      category: "digital",
+    },
+    {
+      id: "p8",
+      url: "/images/tattoo-japanese.png",
+      title: "Koi Warrior",
+      likes: 98,
+      views: 412,
+      category: "japanese",
+    },
+  ]
 
-  const handleSwitchChange = (name: string, checked: boolean) => {
-    setFormData((prev) => ({ ...prev, [name]: checked }))
-  }
+  // Mock data for reviews
+  const reviews = [
+    {
+      id: "r1",
+      author: "Alex Chen",
+      avatar: "/placeholder.svg?text=AC",
+      rating: 5,
+      date: "2 weeks ago",
+      content:
+        "Absolutely amazing work! The detail in my sleeve is incredible, and the whole process was so professional. Highly recommend!",
+      tattoo: "/images/tattoo-cyberpunk.png",
+    },
+    {
+      id: "r2",
+      author: "Jordan Smith",
+      avatar: "/placeholder.svg?text=JS",
+      rating: 5,
+      date: "1 month ago",
+      content:
+        "Incredible attention to detail. The geometric design came out perfect, and the healing process was smooth. Will definitely be back for more!",
+      tattoo: "/images/tattoo-mandala-sleeves.png",
+    },
+    {
+      id: "r3",
+      author: "Taylor Kim",
+      avatar: "/placeholder.svg?text=TK",
+      rating: 4,
+      date: "2 months ago",
+      content:
+        "Great experience overall. The design process was collaborative, and I'm very happy with my tattoo. The only reason for 4 stars is that the session ran a bit longer than expected.",
+      tattoo: "/images/tattoo-fineline-bird.jpeg",
+    },
+  ]
 
-  const handleArrayChange = (name: string, index: number, value: string) => {
-    setFormData((prev) => {
-      const newArray = [...(prev[name as keyof typeof prev] as string[])]
-      newArray[index] = value
-      return { ...prev, [name]: newArray }
+  const handleFollow = () => {
+    setIsFollowing(!isFollowing)
+    toast({
+      title: isFollowing ? "Unfollowed artist" : "Following artist",
+      description: isFollowing
+        ? "You will no longer see updates from this artist"
+        : "You will now see updates from this artist",
     })
   }
 
-  const handleAddArrayItem = (name: string) => {
-    setFormData((prev) => {
-      const newArray = [...(prev[name as keyof typeof prev] as string[]), ""]
-      return { ...prev, [name]: newArray }
+  const handleBooking = () => {
+    toast({
+      title: "Booking request sent",
+      description: "The artist will respond to your booking request soon",
     })
   }
 
-  const handleRemoveArrayItem = (name: string, index: number) => {
-    setFormData((prev) => {
-      const newArray = [...(prev[name as keyof typeof prev] as string[])]
-      newArray.splice(index, 1)
-      return { ...prev, [name]: newArray.length ? newArray : [""] }
+  const handleShare = () => {
+    toast({
+      title: "Profile shared",
+      description: "The artist's profile has been shared",
     })
   }
 
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setSelectedImage(e.target.files[0])
-      setShowCropper(true)
-    }
-  }
-
-  const handleCropComplete = (croppedFile: File) => {
-    setCroppedImage(croppedFile)
-    setShowCropper(false)
-  }
-
-  const handleCropCancel = () => {
-    setSelectedImage(null)
-    setShowCropper(false)
-  }
-
-  const handleSaveProfile = async () => {
-    if (!userId) return
-
-    setSaving(true)
-
-    try {
-      const formDataObj = new FormData()
-
-      // Add all form fields
-      formDataObj.append("bio", formData.bio)
-      formDataObj.append("short_bio", formData.shortBio)
-      formDataObj.append("studio_name", formData.studioName)
-      formDataObj.append("location", formData.location)
-      formDataObj.append("location_description", formData.locationDescription)
-      formDataObj.append("hourly_rate", formData.hourlyRate)
-      formDataObj.append("minimum_price", formData.minimumPrice)
-      formDataObj.append("years_experience", formData.yearsExperience)
-      formDataObj.append("do_list", JSON.stringify(formData.doList.filter((item) => item.trim())))
-      formDataObj.append("dont_list", JSON.stringify(formData.dontList.filter((item) => item.trim())))
-      formDataObj.append("deposit_percentage", formData.depositPercentage)
-      formDataObj.append("cancellation_hours", formData.cancellationHours)
-      formDataObj.append("email_notifications", formData.emailNotifications.toString())
-      formDataObj.append("push_notifications", formData.pushNotifications.toString())
-      formDataObj.append("sms_notifications", formData.smsNotifications.toString())
-
-      // Add profile image if available
-      if (croppedImage) {
-        formDataObj.append("profile_image", croppedImage)
-      }
-
-      const result = await updateArtistProfileAction(formDataObj)
-
-      if (result.success) {
-        toast({
-          title: "Success",
-          description: "Your profile has been updated successfully",
-        })
-
-        // Refresh the profile data
-        const { data } = await getArtistProfile(userId)
-        setProfile(data)
-        calculateProfileCompletion(data)
-
-        // Reset the cropped image
-        setCroppedImage(null)
-
-        // Redirect to the dashboard
-        router.push("/artist/dashboard")
-      } else {
-        toast({
-          title: "Error",
-          description: result.error || "Failed to update profile",
-          variant: "destructive",
-        })
-      }
-    } catch (error) {
-      console.error("Error saving profile:", error)
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred",
-        variant: "destructive",
-      })
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  if (loading) {
-    return (
-      <div className="container mx-auto py-8">
-        <div className="flex justify-between items-center mb-8">
-          <Skeleton className="h-10 w-64" />
-          <Skeleton className="h-10 w-32" />
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="md:col-span-1">
-            <Skeleton className="h-64 w-full" />
-          </div>
-          <div className="md:col-span-3">
-            <Skeleton className="h-12 w-full mb-4" />
-            <Skeleton className="h-64 w-full" />
-          </div>
-        </div>
-      </div>
-    )
+  const handleSave = () => {
+    toast({
+      title: "Artist saved",
+      description: "This artist has been saved to your favorites",
+    })
   }
 
   return (
-    <div className="container mx-auto py-8">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-        <div>
-          <h1 className="text-3xl font-bold">Artist Profile</h1>
-          <p className="text-gray-500">Manage your professional profile and settings</p>
-        </div>
-
-        <div className="flex items-center gap-4">
-          <div className="flex flex-col items-end">
-            <span className="text-sm font-medium">Profile Completion</span>
-            <div className="w-32 mt-1">
-              <Progress value={completionPercentage} className="h-2" />
-            </div>
-          </div>
-          <Button onClick={handleSaveProfile} disabled={saving}>
-            {saving ? "Saving..." : "Save Changes"}
-            <Save className="ml-2 h-4 w-4" />
+    <div className="flex min-h-screen flex-col bg-gradient-to-b from-gray-950 to-purple-950 text-white">
+      <header className="border-b border-purple-900 bg-black/50 backdrop-blur-sm p-4 sticky top-0 z-10">
+        <div className="mx-auto flex max-w-7xl items-center">
+          <Button variant="ghost" size="icon" className="mr-2" asChild>
+            <Link href="/artist/dashboard">
+              <ChevronLeft className="h-5 w-5" />
+            </Link>
           </Button>
+          <div>
+            <h1 className="text-2xl font-bold text-white">Artist Profile</h1>
+            <p className="text-sm text-purple-300">Public view of your profile</p>
+          </div>
         </div>
-      </div>
+      </header>
 
-      {showCropper && selectedImage ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Crop Profile Image</CardTitle>
-            <CardDescription>Adjust your profile picture to fit perfectly</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ImageCropper image={selectedImage} onCropComplete={handleCropComplete} onCancel={handleCropCancel} />
-          </CardContent>
-        </Card>
-      ) : (
-        <Tabs defaultValue="basics">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div className="md:col-span-1">
-              <div className="space-y-4 sticky top-4">
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex flex-col items-center space-y-4 py-4">
-                      <div className="relative">
-                        <div className="h-32 w-32 rounded-full overflow-hidden bg-gray-100">
-                          {croppedImage ? (
-                            <img
-                              src={URL.createObjectURL(croppedImage) || "/placeholder.svg"}
-                              alt="Profile preview"
-                              className="h-full w-full object-cover"
-                            />
-                          ) : (
-                            <img
-                              src={profile?.profile_image_url || "/placeholder.svg?height=128&width=128&query=artist"}
-                              alt={formData.fullName || "Artist"}
-                              className="h-full w-full object-cover"
-                            />
-                          )}
-                        </div>
-                        <Button
-                          size="icon"
-                          variant="secondary"
-                          className="absolute bottom-0 right-0 h-8 w-8 rounded-full"
-                          onClick={() => document.getElementById("profile-image-upload")?.click()}
-                        >
-                          <Edit className="h-4 w-4" />
-                          <input
-                            type="file"
-                            id="profile-image-upload"
-                            className="hidden"
-                            accept="image/*"
-                            onChange={handleImageSelect}
-                          />
-                        </Button>
-                      </div>
-                      <h2 className="text-xl font-semibold">
-                        {formData.fullName || profile?.full_name || "Your Name"}
-                      </h2>
-                      <p className="text-sm text-gray-500 text-center max-w-full overflow-hidden text-ellipsis break-words px-2">
-                        {formData.shortBio || "Your short bio will appear here"}
-                      </p>
+      <main className="flex-1 p-4">
+        <div className="mx-auto max-w-4xl">
+          {/* Artist Header */}
+          <div className="bg-black/40 border border-purple-500/30 rounded-lg p-6 mb-6">
+            <div className="flex flex-col md:flex-row gap-6">
+              <div className="flex-shrink-0">
+                <Avatar className="h-24 w-24 md:h-32 md:w-32">
+                  <AvatarImage src={artistData.avatar || "/placeholder.svg"} alt={artistData.name} />
+                  <AvatarFallback className="bg-purple-800 text-white text-2xl">
+                    {artistData.name.charAt(0)}
+                  </AvatarFallback>
+                </Avatar>
+              </div>
+
+              <div className="flex-1">
+                <div className="flex flex-col md:flex-row md:items-center justify-between mb-4">
+                  <div>
+                    <h2 className="text-2xl font-bold text-white">{artistData.name}</h2>
+                    <p className="text-purple-300">{artistData.username}</p>
+                  </div>
+
+                  <div className="flex gap-2 mt-4 md:mt-0">
+                    <Button
+                      variant={isFollowing ? "outline" : "default"}
+                      className={
+                        isFollowing
+                          ? "bg-purple-950/30 border-purple-500/30 hover:bg-purple-800/50"
+                          : "bg-purple-700 hover:bg-purple-600"
+                      }
+                      onClick={handleFollow}
+                    >
+                      {isFollowing ? "Following" : "Follow"}
+                    </Button>
+                    <Button variant="default" className="bg-purple-700 hover:bg-purple-600" onClick={handleBooking}>
+                      Book Now
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="bg-purple-950/30 border-purple-500/30 hover:bg-purple-800/50"
+                      onClick={handleShare}
+                    >
+                      <Share2 className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="bg-purple-950/30 border-purple-500/30 hover:bg-purple-800/50"
+                      onClick={handleSave}
+                    >
+                      <Bookmark className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+
+                <p className="text-white mb-4">{artistData.bio}</p>
+
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                  <div className="text-center">
+                    <p className="text-xl font-bold text-white">{artistData.followers.toLocaleString()}</p>
+                    <p className="text-sm text-purple-300">Followers</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xl font-bold text-white">{artistData.following.toLocaleString()}</p>
+                    <p className="text-sm text-purple-300">Following</p>
+                  </div>
+                  <div className="text-center">
+                    <div className="flex items-center justify-center">
+                      <Star className="h-5 w-5 text-yellow-500 mr-1 fill-yellow-500" />
+                      <p className="text-xl font-bold text-white">{artistData.rating}</p>
                     </div>
-                  </CardContent>
-                </Card>
+                    <p className="text-sm text-purple-300">Rating</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xl font-bold text-white">{artistData.reviews}</p>
+                    <p className="text-sm text-purple-300">Reviews</p>
+                  </div>
+                </div>
 
-                <TabsList className="flex flex-col h-auto space-y-1">
-                  <TabsTrigger value="basics" className="justify-start">
-                    <User className="mr-2 h-4 w-4" />
-                    Profile Basics
-                  </TabsTrigger>
-                  <TabsTrigger value="portfolio" className="justify-start">
-                    <ImageIcon className="mr-2 h-4 w-4" />
-                    Portfolio
-                  </TabsTrigger>
-                  <TabsTrigger value="location" className="justify-start">
-                    <MapPin className="mr-2 h-4 w-4" />
-                    Studio & Location
-                  </TabsTrigger>
-                  <TabsTrigger value="credentials" className="justify-start">
-                    <Shield className="mr-2 h-4 w-4" />
-                    Credentials
-                  </TabsTrigger>
-                  <TabsTrigger value="preferences" className="justify-start">
-                    <CheckSquare className="mr-2 h-4 w-4" />
-                    Do/Don't List
-                  </TabsTrigger>
-                  <TabsTrigger value="pricing" className="justify-start">
-                    <DollarSign className="mr-2 h-4 w-4" />
-                    Pricing
-                  </TabsTrigger>
-                  <TabsTrigger value="payments" className="justify-start">
-                    <CreditCard className="mr-2 h-4 w-4" />
-                    Payment Rules
-                  </TabsTrigger>
-                  <TabsTrigger value="notifications" className="justify-start">
-                    <Bell className="mr-2 h-4 w-4" />
-                    Notifications
-                  </TabsTrigger>
-                </TabsList>
+                <div className="flex flex-wrap gap-2">
+                  {artistData.specialties.map((specialty, index) => (
+                    <Badge key={index} variant="outline" className="bg-purple-950/30 border-purple-500/30">
+                      {specialty}
+                    </Badge>
+                  ))}
+                </div>
               </div>
             </div>
-
-            <div className="md:col-span-3 space-y-6">
-              <TabsContent value="basics" className="mt-0">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Profile Basics</CardTitle>
-                    <CardDescription>
-                      This information will be displayed on your profile and in search results
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="fullName">Full Name</Label>
-                      <Input
-                        id="fullName"
-                        name="fullName"
-                        value={formData.fullName}
-                        onChange={handleChange}
-                        placeholder="Your full name"
-                      />
-                      <p className="text-sm text-gray-500">This is how clients will see you on the platform</p>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="shortBio">Short Introduction</Label>
-                      <Input
-                        id="shortBio"
-                        name="shortBio"
-                        value={formData.shortBio}
-                        onChange={handleChange}
-                        placeholder="A brief introduction (1-2 sentences)"
-                      />
-                      <p className="text-sm text-gray-500">This appears in search results and match cards</p>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="bio">Full Bio</Label>
-                      <Textarea
-                        id="bio"
-                        name="bio"
-                        value={formData.bio}
-                        onChange={handleChange}
-                        placeholder="Tell clients about yourself, your style, and your approach"
-                        rows={6}
-                      />
-                      <p className="text-sm text-gray-500">Detailed information about your experience and style</p>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="yearsExperience">Years of Experience</Label>
-                      <Input
-                        id="yearsExperience"
-                        name="yearsExperience"
-                        type="number"
-                        min="0"
-                        value={formData.yearsExperience}
-                        onChange={handleChange}
-                        placeholder="e.g., 5"
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="portfolio" className="mt-0">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Portfolio Management</CardTitle>
-                    <CardDescription>Manage your portfolio images and showcase your best work</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    {portfolioLoading ? (
-                      <div className="space-y-4">
-                        <Skeleton className="h-4 w-32" />
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                          {[1, 2, 3, 4].map((i) => (
-                            <Skeleton key={i} className="aspect-square rounded-md" />
-                          ))}
-                        </div>
-                      </div>
-                    ) : portfolioImages.length > 0 ? (
-                      <PortfolioGallery images={portfolioImages} />
-                    ) : (
-                      <div className="text-center py-8">
-                        <ImageIcon className="mx-auto h-12 w-12 text-gray-400" />
-                        <h3 className="mt-2 text-sm font-semibold text-gray-900">No Portfolio Images</h3>
-                        <p className="mt-1 text-sm text-gray-500">
-                          Upload and manage your portfolio images from the dedicated portfolio page
-                        </p>
-                        <div className="mt-6">
-                          <Button asChild>
-                            <Link href="/artist/portfolio">
-                              <Upload className="mr-2 h-4 w-4" />
-                              Manage Portfolio
-                            </Link>
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="location" className="mt-0">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Studio & Location</CardTitle>
-                    <CardDescription>Information about your studio and working location</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="studioName">Studio Name</Label>
-                      <Input
-                        id="studioName"
-                        name="studioName"
-                        value={formData.studioName}
-                        onChange={handleChange}
-                        placeholder="Your studio name"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="location">Location</Label>
-                      <Input
-                        id="location"
-                        name="location"
-                        value={formData.location}
-                        onChange={handleChange}
-                        placeholder="City, State"
-                      />
-                      <p className="text-sm text-gray-500">This helps clients find you in location-based searches</p>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="locationDescription">Location Description</Label>
-                      <Textarea
-                        id="locationDescription"
-                        name="locationDescription"
-                        value={formData.locationDescription}
-                        onChange={handleChange}
-                        placeholder="Describe your studio environment and accessibility"
-                      />
-                    </div>
-
-                    <div className="flex items-center space-x-2">
-                      <Switch
-                        id="isMobileArtist"
-                        checked={profile?.is_mobile_artist || false}
-                        onCheckedChange={(checked) => handleSwitchChange("isMobileArtist", checked)}
-                      />
-                      <Label htmlFor="isMobileArtist">I'm a mobile artist (willing to travel to clients)</Label>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="credentials" className="mt-0">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Credentials</CardTitle>
-                    <CardDescription>Add your licenses, certifications, and other credentials</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="certifications">Certifications & Licenses</Label>
-                      <Textarea
-                        id="certifications"
-                        name="certifications"
-                        value={profile?.certifications || ""}
-                        onChange={handleChange}
-                        placeholder="List your certifications, licenses, and training"
-                      />
-                      <p className="text-sm text-gray-500">
-                        Include bloodborne pathogens certification, health department licenses, etc.
-                      </p>
-                    </div>
-
-                    <div className="space-y-4">
-                      <Label>Upload Credential Documents</Label>
-                      <div className="border-2 border-dashed rounded-lg p-6 text-center">
-                        <FileText className="mx-auto h-8 w-8 text-gray-400" />
-                        <p className="mt-2 text-sm font-medium">
-                          Drag and drop files, or <span className="text-blue-500 cursor-pointer">browse</span>
-                        </p>
-                        <p className="mt-1 text-xs text-gray-500">Upload PDF, JPG, or PNG files (max 5MB each)</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="preferences" className="mt-0">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Do/Don't List</CardTitle>
-                    <CardDescription>
-                      Specify what types of tattoos you love to do and what you don't do
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-4">
-                        <Label className="flex items-center">
-                          <CheckSquare className="mr-2 h-4 w-4 text-green-500" />
-                          Tattoos I Love to Do
-                        </Label>
-
-                        {formData.doList.map((item, index) => (
-                          <div key={`do-${index}`} className="flex items-center gap-2">
-                            <Input
-                              value={item}
-                              onChange={(e) => handleArrayChange("doList", index, e.target.value)}
-                              placeholder="e.g., Floral designs"
-                            />
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleRemoveArrayItem("doList", index)}
-                              disabled={formData.doList.length === 1 && !formData.doList[0]}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        ))}
-
-                        <Button type="button" variant="outline" size="sm" onClick={() => handleAddArrayItem("doList")}>
-                          Add Item
-                        </Button>
-                      </div>
-
-                      <div className="space-y-4">
-                        <Label className="flex items-center">
-                          <XSquare className="mr-2 h-4 w-4 text-red-500" />
-                          Tattoos I Don't Do
-                        </Label>
-
-                        {formData.dontList.map((item, index) => (
-                          <div key={`dont-${index}`} className="flex items-center gap-2">
-                            <Input
-                              value={item}
-                              onChange={(e) => handleArrayChange("dontList", index, e.target.value)}
-                              placeholder="e.g., Face tattoos"
-                            />
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleRemoveArrayItem("dontList", index)}
-                              disabled={formData.dontList.length === 1 && !formData.dontList[0]}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        ))}
-
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleAddArrayItem("dontList")}
-                        >
-                          Add Item
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="pricing" className="mt-0">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Pricing Information</CardTitle>
-                    <CardDescription>Set your rates and pricing structure</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="hourlyRate">Hourly Rate ($)</Label>
-                      <Input
-                        id="hourlyRate"
-                        name="hourlyRate"
-                        type="number"
-                        min="0"
-                        value={formData.hourlyRate}
-                        onChange={handleChange}
-                        placeholder="e.g., 150"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="minimumPrice">Minimum Price ($)</Label>
-                      <Input
-                        id="minimumPrice"
-                        name="minimumPrice"
-                        type="number"
-                        min="0"
-                        value={formData.minimumPrice}
-                        onChange={handleChange}
-                        placeholder="e.g., 100"
-                      />
-                      <p className="text-sm text-gray-500">The minimum amount you charge for any tattoo</p>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>Price Ranges by Style & Size</Label>
-                      <div className="bg-gray-50 p-4 rounded-lg">
-                        <p className="text-sm text-gray-500 mb-2">
-                          Coming soon: Set specific price ranges for different styles and sizes
-                        </p>
-                        <Button variant="outline" disabled>
-                          Add Price Range
-                        </Button>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="pricingFAQ">Pricing FAQ</Label>
-                      <Textarea
-                        id="pricingFAQ"
-                        name="pricingFAQ"
-                        placeholder="Answer common pricing questions here"
-                        rows={4}
-                      />
-                      <p className="text-sm text-gray-500">
-                        Help clients understand your pricing structure and what affects cost
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="payments" className="mt-0">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Payment Rules</CardTitle>
-                    <CardDescription>Set your deposit and cancellation policies</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="depositPercentage">Deposit Percentage (%)</Label>
-                      <Input
-                        id="depositPercentage"
-                        name="depositPercentage"
-                        type="number"
-                        min="0"
-                        max="100"
-                        value={formData.depositPercentage}
-                        onChange={handleChange}
-                        placeholder="e.g., 25"
-                      />
-                      <p className="text-sm text-gray-500">
-                        Percentage of total price required as a non-refundable deposit
-                      </p>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="cancellationHours">Cancellation Notice (hours)</Label>
-                      <Input
-                        id="cancellationHours"
-                        name="cancellationHours"
-                        type="number"
-                        min="0"
-                        value={formData.cancellationHours}
-                        onChange={handleChange}
-                        placeholder="e.g., 48"
-                      />
-                      <p className="text-sm text-gray-500">
-                        How many hours notice required for cancellation without penalty
-                      </p>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="paymentPolicy">Payment Policy</Label>
-                      <Textarea
-                        id="paymentPolicy"
-                        name="paymentPolicy"
-                        placeholder="Describe your payment and cancellation policies in detail"
-                        rows={4}
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="notifications" className="mt-0">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Notification Preferences</CardTitle>
-                    <CardDescription>Control how and when you receive notifications</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-0.5">
-                          <Label htmlFor="emailNotifications">Email Notifications</Label>
-                          <p className="text-sm text-gray-500">Receive notifications via email</p>
-                        </div>
-                        <Switch
-                          id="emailNotifications"
-                          checked={formData.emailNotifications}
-                          onCheckedChange={(checked) => handleSwitchChange("emailNotifications", checked)}
-                        />
-                      </div>
-
-                      <Separator />
-
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-0.5">
-                          <Label htmlFor="pushNotifications">Push Notifications</Label>
-                          <p className="text-sm text-gray-500">Receive notifications on your device</p>
-                        </div>
-                        <Switch
-                          id="pushNotifications"
-                          checked={formData.pushNotifications}
-                          onCheckedChange={(checked) => handleSwitchChange("pushNotifications", checked)}
-                        />
-                      </div>
-
-                      <Separator />
-
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-0.5">
-                          <Label htmlFor="smsNotifications">SMS Notifications</Label>
-                          <p className="text-sm text-gray-500">Receive text messages for important updates</p>
-                        </div>
-                        <Switch
-                          id="smsNotifications"
-                          checked={formData.smsNotifications}
-                          onCheckedChange={(checked) => handleSwitchChange("smsNotifications", checked)}
-                        />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </div>
           </div>
-        </Tabs>
-      )}
+
+          {/* Tabs */}
+          <Tabs defaultValue="portfolio" value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="bg-black/40 border border-purple-500/30 p-1 mb-6">
+              <TabsTrigger value="portfolio" className="data-[state=active]:bg-purple-700">
+                Portfolio
+              </TabsTrigger>
+              <TabsTrigger value="info" className="data-[state=active]:bg-purple-700">
+                Info
+              </TabsTrigger>
+              <TabsTrigger value="reviews" className="data-[state=active]:bg-purple-700">
+                Reviews
+              </TabsTrigger>
+            </TabsList>
+
+            {/* Portfolio Tab */}
+            <TabsContent value="portfolio" className="mt-0">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {portfolioItems.map((item) => (
+                  <div key={item.id} className="group relative aspect-square rounded-md overflow-hidden">
+                    <Image
+                      src={item.url || "/placeholder.svg"}
+                      alt={item.title}
+                      fill
+                      className="object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-3">
+                      <h3 className="text-white font-medium">{item.title}</h3>
+                      <div className="flex items-center justify-between mt-1">
+                        <div className="flex items-center gap-2">
+                          <span className="flex items-center text-xs text-white/80">
+                            <Heart className="h-3 w-3 mr-1" /> {item.likes}
+                          </span>
+                          <span className="flex items-center text-xs text-white/80">
+                            <Eye className="h-3 w-3 mr-1" /> {item.views}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <Badge className="absolute top-2 left-2 bg-purple-600/80 capitalize">{item.category}</Badge>
+                  </div>
+                ))}
+              </div>
+            </TabsContent>
+
+            {/* Info Tab */}
+            <TabsContent value="info" className="mt-0">
+              <Card className="bg-black/40 border-purple-500/30">
+                <CardContent className="p-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <h3 className="text-lg font-semibold text-white mb-4">Location & Studio</h3>
+                      <div className="space-y-3">
+                        <div>
+                          <p className="text-sm text-purple-300">Location</p>
+                          <p className="text-white">{artistData.location}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-purple-300">Studio</p>
+                          <p className="text-white">{artistData.studio}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-purple-300">Experience</p>
+                          <p className="text-white">{artistData.experience}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <h3 className="text-lg font-semibold text-white mb-4">Booking Information</h3>
+                      <div className="space-y-3">
+                        <div>
+                          <p className="text-sm text-purple-300">Availability</p>
+                          <p className="text-white">{artistData.availability}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-purple-300">Hourly Rate</p>
+                          <p className="text-white">{artistData.hourlyRate}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-purple-300">Minimum</p>
+                          <p className="text-white">{artistData.minimumRate}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-purple-300">Consultation</p>
+                          <p className="text-white">{artistData.consultationFee}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-6">
+                    <h3 className="text-lg font-semibold text-white mb-4">Booking Process</h3>
+                    <ol className="space-y-3 list-decimal list-inside">
+                      <li className="text-white">
+                        <span className="text-purple-300">Initial Contact:</span> Send a message with your tattoo idea,
+                        placement, and size
+                      </li>
+                      <li className="text-white">
+                        <span className="text-purple-300">Consultation:</span> Schedule a consultation to discuss design
+                        details
+                      </li>
+                      <li className="text-white">
+                        <span className="text-purple-300">Deposit:</span> Pay a non-refundable deposit to secure your
+                        appointment
+                      </li>
+                      <li className="text-white">
+                        <span className="text-purple-300">Design Approval:</span> Review and approve the final design
+                      </li>
+                      <li className="text-white">
+                        <span className="text-purple-300">Appointment:</span> Arrive on time for your scheduled session
+                      </li>
+                    </ol>
+                  </div>
+
+                  <div className="mt-6 flex justify-center">
+                    <Button className="bg-purple-700 hover:bg-purple-600" onClick={handleBooking}>
+                      <Calendar className="mr-2 h-4 w-4" />
+                      Book Consultation
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Reviews Tab */}
+            <TabsContent value="reviews" className="mt-0">
+              <div className="space-y-4">
+                {reviews.map((review) => (
+                  <Card key={review.id} className="bg-black/40 border-purple-500/30">
+                    <CardContent className="p-4">
+                      <div className="flex items-start gap-4">
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage src={review.avatar || "/placeholder.svg"} alt={review.author} />
+                          <AvatarFallback className="bg-purple-800 text-white">
+                            {review.author.charAt(0)}
+                          </AvatarFallback>
+                        </Avatar>
+
+                        <div className="flex-1">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <h4 className="font-medium text-white">{review.author}</h4>
+                              <div className="flex items-center">
+                                <div className="flex">
+                                  {[...Array(5)].map((_, i) => (
+                                    <Star
+                                      key={i}
+                                      className={`h-4 w-4 ${i < review.rating ? "text-yellow-500 fill-yellow-500" : "text-gray-500"}`}
+                                    />
+                                  ))}
+                                </div>
+                                <span className="text-xs text-purple-300 ml-2">{review.date}</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <p className="text-white mt-2">{review.content}</p>
+
+                          <div className="mt-3">
+                            <div className="relative h-24 w-24 rounded-md overflow-hidden">
+                              <Image
+                                src={review.tattoo || "/placeholder.svg"}
+                                alt="Tattoo"
+                                fill
+                                className="object-cover"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+
+                <div className="flex justify-center mt-4">
+                  <Button variant="outline" className="bg-purple-950/30 border-purple-500/30 hover:bg-purple-800/50">
+                    View All Reviews
+                  </Button>
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
+
+          {/* Contact Button */}
+          <div className="fixed bottom-6 right-6">
+            <Button className="bg-purple-700 hover:bg-purple-600 rounded-full h-14 w-14 shadow-lg">
+              <MessageSquare className="h-6 w-6" />
+            </Button>
+          </div>
+        </div>
+      </main>
     </div>
   )
 }

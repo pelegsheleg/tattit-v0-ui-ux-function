@@ -27,7 +27,14 @@ export default function RoleSelection({ onRoleSelect }: RoleSelectionProps) {
           }`}
           onClick={() => setSelectedRole("client")}
         >
-          <Image src="/placeholder.svg?text=Client" alt="Client" width={100} height={100} className="mx-auto mb-4" />
+          <div className="relative w-full h-64 mb-4 overflow-hidden rounded-lg">
+            <Image
+              src="/images/mythological-tattoos.png"
+              alt="Person with mythological tattoos"
+              fill
+              className="object-cover"
+            />
+          </div>
           <h3 className="text-lg font-semibold text-center">I'm Looking for an Artist</h3>
         </motion.div>
         <motion.div

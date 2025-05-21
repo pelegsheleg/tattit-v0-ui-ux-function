@@ -26,13 +26,11 @@ import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { useAuth } from "../contexts/AuthContext"
 import confetti from "canvas-confetti"
-import { toast } from "@/components/ui/use-toast"
 
 const artistRegistrationSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
   phone: z.string().min(10, "Phone number must be at least 10 digits"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
   bio: z.string().min(50, "Bio must be at least 50 characters"),
   yearsOfExperience: z.number().min(0, "Experience must be a positive number"),
   specialties: z.string().min(2, "Specialties must be at least 2 characters"),
@@ -89,84 +87,16 @@ export default function ArtistRegistration() {
 
   const onSubmit = async (data: ArtistRegistrationFormValues) => {
     setIsLoading(true)
-
-    try {
-      // Format the data for the signUp function
-      const signUpData = {
-        email: data.email,
-        password: data.password,
-        fullName: data.name,
-        role: "artist" as const,
-      }
-
-      // Call the actual signUp function from lib/auth.ts
-      const response = await fetch("/api/auth/signup", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(signUpData),
-      })
-
-      const result = await response.json()
-
-      if (!result.success) {
-        throw new Error(result.error || "Registration failed")
-      }
-
-      // After successful registration, update the artist profile with additional details
-      const artistProfileData = {
-        bio: data.bio,
-        years_experience: data.yearsOfExperience,
-        specialties: data.specialties.split(",").map((s) => s.trim()),
-        personal_brand_statement: data.personalBrandStatement,
-        studio_name: data.studioName || null,
-        location: data.location,
-        is_mobile_artist: data.isMobileArtist,
-        location_preferences: data.locationPreferences || null,
-        certifications: data.certifications || null,
-        style_tags: selectedStyleTags,
-        // Add these fields for the initial setup
-        userId: result.user.id,
-        isInitialSetup: true,
-      }
-
-      // Update the artist profile
-      const profileResponse = await fetch("/api/artist/profile", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(artistProfileData),
-      })
-
-      const profileResult = await profileResponse.json()
-
-      if (!profileResult.success) {
-        console.error("Profile update failed:", profileResult.error)
-        // Continue anyway, as the user is created
-      }
-
-      // Set the authenticated state
-      login("artist")
-
-      // Show success confirmation
-      setShowConfirmation(true)
-      confetti({
-        particleCount: 100,
-        spread: 70,
-        origin: { y: 0.6 },
-      })
-    } catch (error) {
-      console.error("Registration error:", error)
-      toast({
-        title: "Registration Failed",
-        description: error instanceof Error ? error.message : "An unexpected error occurred",
-        variant: "destructive",
-      })
-    } finally {
-      setIsLoading(false)
-    }
+    const submissionData = { ...data, styleTags: selectedStyleTags }
+    await new Promise((resolve) => setTimeout(resolve, 2000))
+    setIsLoading(false)
+    login("artist")
+    setShowConfirmation(true)
+    confetti({
+      particleCount: 100,
+      spread: 70,
+      origin: { y: 0.6 },
+    })
   }
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -238,17 +168,6 @@ export default function ArtistRegistration() {
                 className="bg-purple-950/30 border-purple-500/30"
               />
               {errors.phone && <p className="text-red-500 text-sm">{errors.phone.message}</p>}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Create a secure password"
-                {...register("password")}
-                className="bg-purple-950/30 border-purple-500/30"
-              />
-              {errors.password && <p className="text-red-500 text-sm">{errors.password.message}</p>}
             </div>
             <div className="flex justify-end">
               <Button onClick={() => setStep(2)} className="bg-purple-700 hover:bg-purple-600 text-white">
@@ -458,7 +377,7 @@ export default function ArtistRegistration() {
               <div className="flex items-center space-x-4">
                 <div className="relative w-24 h-24 rounded-full overflow-hidden bg-purple-900/50">
                   {profileImage ? (
-                    <Image src={profileImage || "/placeholder.svg"} alt="Profile" fill className="object-cover" />
+                    <Image src={profileImage || "/placeholder.svg"} alt="Profile" layout="fill" objectFit="cover" />
                   ) : (
                     <div className="flex items-center justify-center w-full h-full text-purple-300">
                       <Camera className="w-8 h-8" />

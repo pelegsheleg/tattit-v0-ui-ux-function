@@ -1,56 +1,34 @@
-import { getArtists } from "../actions/artist-actions"
-import { ArtistCard } from "@/components/artist-card"
-import { Button } from "@/components/ui/button"
 import Link from "next/link"
+import { ArrowLeft } from "lucide-react"
+import Image from "next/image"
 
-export default async function ArtistsPage() {
-  const { artists, error } = await getArtists()
-
-  console.log("Artists page received:", { artists, error })
-
-  if (error) {
-    return (
-      <div className="container mx-auto py-8">
-        <h1 className="text-2xl font-bold mb-4">Artists</h1>
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-          <p>Error loading artists: {error}</p>
-          <p className="mt-2">
-            <Link href="/auth" className="text-blue-600 underline">
-              Go to authentication page
-            </Link>
-          </p>
-        </div>
-      </div>
-    )
-  }
+export default function ArtistsPage() {
+  const artists = ["NeoInk", "CyberSkin", "QuantumTat", "BioMech", "PixelPunk", "NeonNeedle", "SynthSkin", "GlitchArt"]
 
   return (
-    <div className="container mx-auto py-8">
-      <h1 className="text-2xl font-bold mb-4">Discover Tattoo Artists</h1>
-
-      {/* Debug info - remove in production */}
-      <div className="mb-6 p-4 bg-gray-100 rounded-lg">
-        <h2 className="font-semibold mb-2">Debug Info:</h2>
-        <p>Found {artists?.length || 0} artists</p>
-        {artists && artists.length > 0 && (
-          <details>
-            <summary className="cursor-pointer text-blue-600">Show artist data</summary>
-            <pre className="mt-2 p-2 bg-gray-200 rounded text-xs overflow-auto">{JSON.stringify(artists, null, 2)}</pre>
-          </details>
-        )}
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {artists && artists.length > 0 ? (
-          artists.map((artist) => <ArtistCard key={artist.id} artist={artist} />)
-        ) : (
-          <div className="col-span-full text-center py-12">
-            <p className="text-gray-500 mb-4">No artists found</p>
-            <Button asChild>
-              <Link href="/auth">Register as an Artist</Link>
-            </Button>
+    <div className="min-h-screen bg-gray-950 text-white p-4">
+      <Link href="/search" className="inline-flex items-center text-blue-400 mb-6">
+        <ArrowLeft className="mr-2" /> Back to Search
+      </Link>
+      <h1 className="text-3xl font-bold mb-6">Top Artists</h1>
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
+        {artists.map((artist) => (
+          <div key={artist} className="flex flex-col items-center space-y-2">
+            <div className="relative w-full aspect-square rounded-full overflow-hidden border-2 border-blue-400/40">
+              <Image
+                src={`/images/tattoo-${artist.toLowerCase()}.png`}
+                alt={artist}
+                layout="fill"
+                objectFit="cover"
+                className="bg-gradient-to-br from-blue-900 to-cyan-900"
+                onError={(e) => {
+                  e.currentTarget.src = `/placeholder.svg?text=${artist[0]}`
+                }}
+              />
+            </div>
+            <span className="text-sm font-medium text-center">{artist}</span>
           </div>
-        )}
+        ))}
       </div>
     </div>
   )

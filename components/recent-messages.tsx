@@ -1,70 +1,61 @@
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import Link from "next/link"
-
-export function RecentMessages({ conversations, error }) {
-  if (error) {
-    return (
-      <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-        <p>Error loading messages: {error}</p>
-      </div>
-    )
-  }
-
-  if (!conversations || conversations.length === 0) {
-    return (
-      <div className="text-center py-12 bg-gray-50 rounded-lg">
-        <p className="text-gray-500 mb-4">No messages yet</p>
-        <Button asChild>
-          <Link href="/messages">Check Messages</Link>
-        </Button>
-      </div>
-    )
-  }
+export function RecentMessages() {
+  // Mock data for recent messages
+  const messages = [
+    {
+      id: "1",
+      sender: "Alex Chen",
+      avatar: "/placeholder.svg?text=AC",
+      text: "Hey, I'm looking forward to our session tomorrow!",
+      timestamp: "Today, 10:23 AM",
+      unread: true,
+    },
+    {
+      id: "2",
+      sender: "Jordan Smith",
+      avatar: "/placeholder.svg?text=JS",
+      text: "Can we discuss some design changes before the appointment?",
+      timestamp: "Yesterday, 4:15 PM",
+      unread: true,
+    },
+    {
+      id: "3",
+      sender: "Taylor Kim",
+      avatar: "/placeholder.svg?text=TK",
+      text: "Thanks for the design preview. It looks amazing!",
+      timestamp: "May 18, 2:30 PM",
+      unread: false,
+    },
+  ]
 
   return (
     <div className="space-y-4">
-      {conversations.slice(0, 5).map((conversation) => (
-        <Card key={conversation.partnerId}>
-          <CardContent className="p-4">
-            <div className="flex justify-between items-center">
-              <div className="flex items-center gap-3">
-                <div className="relative">
-                  <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
-                    {conversation.partner?.profile_image_url ? (
-                      <img
-                        src={conversation.partner.profile_image_url || "/placeholder.svg"}
-                        alt={conversation.partner.full_name}
-                        className="w-10 h-10 rounded-full object-cover"
-                      />
-                    ) : (
-                      conversation.partner?.full_name?.charAt(0) || "?"
-                    )}
-                  </div>
-                  {conversation.unreadCount > 0 && (
-                    <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-white text-xs">
-                      {conversation.unreadCount}
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <p className="font-semibold">{conversation.partner?.full_name}</p>
-                  <p className="text-sm text-gray-500 truncate max-w-[200px]">{conversation.lastMessage.content}</p>
-                </div>
-              </div>
-              <div className="text-xs text-gray-500">
-                {new Date(conversation.lastMessage.created_at).toLocaleDateString()}
-              </div>
+      {messages.map((message) => (
+        <div
+          key={message.id}
+          className={`bg-black/40 border ${message.unread ? "border-purple-500/50" : "border-purple-500/20"} rounded-lg p-4`}
+        >
+          <div className="flex items-center gap-3 mb-2">
+            <div className="h-10 w-10 rounded-full overflow-hidden bg-purple-900/50">
+              <img
+                src={message.avatar || "/placeholder.svg"}
+                alt={message.sender}
+                className="h-full w-full object-cover"
+              />
             </div>
-          </CardContent>
-        </Card>
+            <div>
+              <h3 className="font-medium text-white">{message.sender}</h3>
+              <p className="text-xs text-purple-300">{message.timestamp}</p>
+            </div>
+            {message.unread && <span className="ml-auto w-2 h-2 bg-purple-500 rounded-full"></span>}
+          </div>
+          <p className="text-sm text-purple-100">{message.text}</p>
+        </div>
       ))}
-
-      <div className="text-center">
-        <Button asChild variant="outline">
-          <Link href="/messages">View all messages</Link>
-        </Button>
-      </div>
+      <button className="w-full bg-purple-950/50 hover:bg-purple-900/50 text-purple-300 border border-purple-500/30 rounded-lg py-2 text-sm">
+        View All Messages
+      </button>
     </div>
   )
 }
+
+export default RecentMessages

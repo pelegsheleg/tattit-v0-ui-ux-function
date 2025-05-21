@@ -1,62 +1,73 @@
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import Link from "next/link"
-
-export function UpcomingBookings({ bookings, error }) {
-  if (error) {
-    return (
-      <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-        <p>Error loading bookings: {error}</p>
-      </div>
-    )
-  }
-
-  if (!bookings || bookings.length === 0) {
-    return (
-      <div className="text-center py-12 bg-gray-50 rounded-lg">
-        <p className="text-gray-500 mb-4">No upcoming bookings</p>
-        <Button asChild>
-          <Link href="/artist/availability">Set Your Availability</Link>
-        </Button>
-      </div>
-    )
-  }
+export function UpcomingBookings() {
+  // Mock data for upcoming bookings
+  const bookings = [
+    {
+      id: 1,
+      clientName: "Alex Chen",
+      designName: "Cyberpunk Sleeve",
+      date: "Today",
+      time: "2:00 PM",
+      image: "/images/tattoo-cyberpunk.png",
+      status: "confirmed",
+    },
+    {
+      id: 2,
+      clientName: "Jordan Smith",
+      designName: "Geometric Wolf",
+      date: "Tomorrow",
+      time: "10:00 AM",
+      image: "/images/tattoo-geometric.png",
+      status: "confirmed",
+    },
+    {
+      id: 3,
+      clientName: "Taylor Kim",
+      designName: "Neon Dragon",
+      date: "May 20",
+      time: "3:30 PM",
+      image: "/images/tattoo-mythological.png",
+      status: "pending",
+    },
+  ]
 
   return (
     <div className="space-y-4">
-      {bookings.slice(0, 5).map((booking) => (
-        <Card key={booking.id}>
-          <CardContent className="p-4">
-            <div className="flex justify-between items-center">
-              <div>
-                <p className="font-semibold">{booking.client?.full_name}</p>
-                <p className="text-sm text-gray-500">
-                  {new Date(booking.booking_date).toLocaleDateString()} at {booking.start_time.substring(0, 5)} -{" "}
-                  {booking.end_time.substring(0, 5)}
-                </p>
-              </div>
-              <Badge
-                className={
-                  booking.status === "confirmed"
-                    ? "bg-green-100 text-green-800"
-                    : booking.status === "pending"
-                      ? "bg-yellow-100 text-yellow-800"
-                      : "bg-gray-100 text-gray-800"
-                }
+      {bookings.map((booking) => (
+        <div
+          key={booking.id}
+          className="bg-black/40 border border-purple-500/30 rounded-lg p-4 flex items-center gap-4"
+        >
+          <div className="h-16 w-16 rounded-md overflow-hidden bg-purple-900/30 flex-shrink-0">
+            <img
+              src={booking.image || "/placeholder.svg"}
+              alt={booking.designName}
+              className="h-full w-full object-cover"
+            />
+          </div>
+          <div className="flex-1">
+            <h3 className="font-medium text-white">{booking.clientName}</h3>
+            <p className="text-sm text-purple-300">{booking.designName}</p>
+            <div className="flex items-center mt-1">
+              <span className="text-xs text-purple-400">
+                {booking.date} at {booking.time}
+              </span>
+              <span
+                className={`ml-2 px-2 py-0.5 text-xs rounded-full ${
+                  booking.status === "confirmed" ? "bg-green-500/20 text-green-300" : "bg-yellow-500/20 text-yellow-300"
+                }`}
               >
-                {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
-              </Badge>
+                {booking.status === "confirmed" ? "Confirmed" : "Pending"}
+              </span>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+          <button className="bg-purple-700 hover:bg-purple-600 text-white px-3 py-1 rounded-md text-sm">Details</button>
+        </div>
       ))}
-
-      <div className="text-center">
-        <Button asChild variant="outline">
-          <Link href="/artist/bookings">View all bookings</Link>
-        </Button>
-      </div>
+      <button className="w-full bg-purple-950/50 hover:bg-purple-900/50 text-purple-300 border border-purple-500/30 rounded-lg py-2 text-sm">
+        View All Bookings
+      </button>
     </div>
   )
 }
+
+export default UpcomingBookings

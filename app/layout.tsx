@@ -1,26 +1,30 @@
 import type React from "react"
-import { getUserDetails, getSession } from "@/lib/auth"
-import { Toaster } from "@/components/ui/toaster"
-import { Providers } from "./providers"
+import type { Metadata } from "next"
+import { Inter, Orbitron } from "next/font/google"
 import "./globals.css"
+import { AuthProvider } from "./contexts/AuthContext"
+import RootLayoutContent from "./RootLayoutContent"
 
-export const metadata = {
-  title: "Tattit - Connect with Tattoo Artists",
-  description: "Find and book tattoo artists that match your style preferences",
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" })
+const orbitron = Orbitron({ subsets: ["latin"], variable: "--font-orbitron" })
+
+export const metadata: Metadata = {
+  title: "Tattit - Your AI-Powered Tattoo Journey",
+  description: "Find your perfect tattoo artist and design with AI assistance",
     generator: 'v0.dev'
 }
 
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const session = await getSession()
-  const user = session ? await getUserDetails() : null
-
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
   return (
     <html lang="en">
-      <body>
-        <Providers>
-          <main>{children}</main>
-          <Toaster />
-        </Providers>
+      <body className={`${inter.variable} ${orbitron.variable} font-sans`}>
+        <AuthProvider>
+          <RootLayoutContent>{children}</RootLayoutContent>
+        </AuthProvider>
       </body>
     </html>
   )

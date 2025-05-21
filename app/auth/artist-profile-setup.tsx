@@ -46,59 +46,26 @@ export default function ArtistProfileSetup({ onComplete, onSkip }: ArtistProfile
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="portfolio">Upload Portfolio Work</Label>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="border-2 border-dashed border-purple-500/30 rounded-lg p-8 text-center">
-              <Input id="portfolio" type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
-              <Label htmlFor="portfolio" className="cursor-pointer flex flex-col items-center">
-                {portfolioImage ? (
-                  <Image
-                    src={portfolioImage || "/placeholder.svg"}
-                    alt="Portfolio work"
-                    width={200}
-                    height={200}
-                    className="rounded-lg object-cover"
-                  />
-                ) : (
-                  <>
-                    <Upload className="w-12 h-12 text-purple-400 mb-2" />
-                    <span className="text-purple-300">Main portfolio piece</span>
-                  </>
-                )}
-              </Label>
-            </div>
-
-            {/* Additional portfolio pieces */}
-            {[1, 2, 3].map((index) => (
-              <div key={index} className="border-2 border-dashed border-purple-500/30 rounded-lg p-4 text-center">
-                <Input id={`portfolio-${index}`} type="file" accept="image/*" className="hidden" />
-                <Label htmlFor={`portfolio-${index}`} className="cursor-pointer flex flex-col items-center">
-                  <Upload className="w-8 h-8 text-purple-400 mb-2" />
-                  <span className="text-purple-300 text-sm">Additional work</span>
-                </Label>
-              </div>
-            ))}
+          <div className="border-2 border-dashed border-purple-500/30 rounded-lg p-8 text-center">
+            <Input id="portfolio" type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+            <Label htmlFor="portfolio" className="cursor-pointer flex flex-col items-center">
+              {portfolioImage ? (
+                <Image
+                  src={portfolioImage || "/placeholder.svg"}
+                  alt="Portfolio work"
+                  width={200}
+                  height={200}
+                  className="rounded-lg object-cover"
+                />
+              ) : (
+                <>
+                  <Upload className="w-12 h-12 text-purple-400 mb-2" />
+                  <span className="text-purple-300">Click to upload or drag and drop</span>
+                </>
+              )}
+            </Label>
           </div>
         </div>
-
-        <div className="space-y-2">
-          <Label className="text-lg font-semibold">Style Analysis</Label>
-          <p className="text-sm text-purple-300 mb-4">
-            Our AI will analyze your work to better match you with clients. Upload clear images that showcase your
-            style.
-          </p>
-
-          <div className="bg-purple-900/20 p-4 rounded-lg">
-            <h3 className="font-medium mb-2">Style Tags (AI Generated)</h3>
-            <div className="flex flex-wrap gap-2">
-              {["Realism", "Fine Line", "Black & Grey", "Minimalist"].map((tag) => (
-                <span key={tag} className="px-2 py-1 bg-purple-800/50 rounded-full text-sm">
-                  {tag}
-                </span>
-              ))}
-            </div>
-          </div>
-        </div>
-
         <div className="flex gap-4">
           <Button
             type="submit"
